@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -481,17 +482,16 @@
             if (!file) return null;
             const fileName = `${Date.now()}_${file.name}`;
 
-            // Supabase Storage 'uploads' 버킷에 파일 업로드
             const { data, error } = await supabase.storage
                 .from('uploads')
                 .upload(fileName, file);
 
             if (error) {
                 console.error("파일 업로드 에러:", error);
+                alert("파일 업로드 실패: " + error.message);
                 return null;
             }
 
-            // 사진/파일에 접근할 수 있는 Public URL 가져오기
             const { data: publicUrlData } = supabase.storage
                 .from('uploads')
                 .getPublicUrl(fileName);
@@ -758,7 +758,7 @@
                 await fetchPostsFromCloud();
                 showToast("게시물이 삭제되었습니다.");
             } else {
-                alert("삭제 중 오류가 발생했습니다.");
+                alert("삭제 중 오류가 발생했습니다: " + error.message);
             }
         }
 
@@ -774,7 +774,7 @@
                 await fetchPostsFromCloud();
                 showToast("게시물이 삭제되었습니다.");
             } else {
-                alert("삭제 중 오류가 발생했습니다.");
+                alert("삭제 중 오류가 발생했습니다: " + error.message);
             }
         }
 
@@ -818,7 +818,7 @@
                 cancelPostEdit();
                 showToast("게시물이 수정되었습니다.");
             } else {
-                alert("수정 중 오류가 발생했습니다.");
+                alert("수정 중 오류가 발생했습니다: " + error.message);
             }
         }
 
@@ -922,7 +922,7 @@
                 renderComments();
                 showToast("댓글이 수정되었습니다.");
             } else {
-                alert("댓글 수정 중 오류가 발생했습니다.");
+                alert("댓글 수정 중 오류가 발생했습니다: " + error.message);
             }
         }
 
@@ -942,7 +942,7 @@
                 renderComments();
                 showToast("댓글이 삭제되었습니다.");
             } else {
-                alert("댓글 삭제 중 오류가 발생했습니다.");
+                alert("댓글 삭제 중 오류가 발생했습니다: " + error.message);
             }
         }
 
@@ -981,7 +981,7 @@
                     renderComments();
                     showToast("댓글이 등록되었습니다.");
                 } else {
-                    alert("댓글 등록 중 오류가 발생했습니다.");
+                    alert("댓글 등록 중 오류가 발생했습니다: " + error.message);
                 }
             }
         }
@@ -1089,7 +1089,8 @@
                 closeReportModal();
                 showToast("익명 불편신고가 접수되었습니다.");
             } else {
-                alert("신고 접수 중 오류가 발생했습니다.");
+                console.error("신고 접수 에러:", error);
+                alert("신고 접수 중 오류가 발생했습니다: " + error.message);
             }
         }
 
@@ -1122,7 +1123,6 @@
             const fileInput = document.getElementById('postFileInput');
             const selectedFile = fileInput && fileInput.files ? fileInput.files[0] : null;
 
-            // 파일이 있다면 Storage에 먼저 업로드
             let fileData = null;
             if (selectedFile) {
                 fileData = await uploadFileAndGetURL(selectedFile);
@@ -1140,19 +1140,19 @@
                 content: content,
                 date: todayStr,
                 comments: [],
-                createdAt: Date.now(),
+                createdAt: postId,
                 dataUrl: fileData ? fileData.url : null,
                 file: fileData ? fileData.meta : null
             };
 
-            // Supabase DB에 저장
             const { error } = await supabase.from('posts').insert([newPost]);
             if (!error) {
-                await fetchPostsFromCloud(); // 목록 새로고침
+                await fetchPostsFromCloud();
                 closePostModal();
                 showToast("기사가 등록되었습니다.");
             } else {
-                alert("기사 등록 중 오류가 발생했습니다.");
+                console.error("기사 등록 에러 디테일:", error);
+                alert("기사 등록 실패: " + (error.message || "알 수 없는 오류"));
             }
         }
 
@@ -1178,4 +1178,4 @@
     </script>
 </body>
 </html>
-
+```
