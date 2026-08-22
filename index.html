@@ -3,132 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>시사톡톡</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <title>긴급 테스트</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
       const SUPABASE_URL = "https://djecswoekpqiydrlriyd.supabase.co";
       const SUPABASE_KEY = "sb_publishable_-NUgsUBSfLy6qyyYXvMlFA_EOqLZeya";
       const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     </script>
-    <style>
-        body { font-family: "Pretendard Variable", Pretendard, sans-serif; background-color: #f6f9fb; color: #0f172a; word-break: keep-all; }
-    </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased">
-    <header class="bg-white border-b border-slate-100 sticky top-0 z-30 shadow-sm">
-        <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-            <h1 class="text-lg font-black text-slate-900">시사톡톡</h1>
-            <div class="flex items-center space-x-2">
-                <button onclick="openAdminModal()" class="px-3 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 rounded-full">관리자 인증</button>
-                <button id="adminWriteBtn" onclick="openPostModal()" class="hidden px-3.5 py-1.5 text-xs font-bold text-white bg-slate-900 rounded-full">기사작성</button>
-            </div>
-        </div>
-    </header>
-
-    <main class="flex-1 max-w-4xl w-full mx-auto px-4 py-6">
-        <div id="postsList" class="flex flex-col gap-3">
-            <p class="text-xs text-slate-400 text-center py-10">불러오는 중...</p>
-        </div>
-    </main>
-
-    <!-- Modal: Post Write -->
-    <div id="postModal" class="fixed inset-0 bg-slate-900/60 z-50 hidden flex items-center justify-center p-3">
-        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-3">
-            <h3 class="text-base font-bold text-slate-900">기사 작성 (디버그 모드)</h3>
-            <form onsubmit="handleCreatePost(event)" class="space-y-3">
-                <input type="text" id="postTitle" required placeholder="제목" class="w-full px-3 py-2 border rounded-xl text-xs">
-                <textarea id="postContent" rows="3" required placeholder="내용" class="w-full px-3 py-2 border rounded-xl text-xs"></textarea>
-                <input type="file" id="postFileInput" class="w-full text-xs">
-                <div class="flex justify-end gap-2">
-                    <button type="button" onclick="closePostModal()" class="px-3 py-1.5 text-xs">취소</button>
-                    <button type="submit" class="px-4 py-1.5 text-xs bg-slate-900 text-white rounded-full">기사 등록</button>
-                </div>
-            </form>
-        </div>
-    </div>
+<body style="padding: 30px; font-family: sans-serif; text-align: center;">
+    <h2>🔧 기사 등록 긴급 테스트</h2>
+    <p style="color: #666; font-size: 14px;">아래 버튼을 누르면 즉시 데이터베이스에 글이 등록됩니다.</p>
+    
+    <button onclick="testInsert()" style="padding: 20px 40px; font-size: 18px; font-weight: bold; background: #0f172a; color: white; border: none; border-radius: 12px; cursor: pointer;">
+        🚀 지금 바로 강제 등록 테스트
+    </button>
 
     <script>
-        let isAdmin = localStorage.getItem('sisatalk_admin_v2') === 'true';
-        window.addEventListener('load', async () => {
-            lucide.createIcons();
-            updateAdminUI();
-            await fetchPosts();
-        });
-
-        function openAdminModal() {
-            const code = prompt("관리자 비밀번호를 입력하세요 (1004):");
-            if (code === "1004") {
-                isAdmin = true;
-                localStorage.setItem('sisatalk_admin_v2', 'true');
-                updateAdminUI();
-                alert("관리자 인증 완료!");
-            } else if (code) {
-                alert("비밀번호 틀림");
-            }
-        }
-
-        function updateAdminUI() {
-            document.getElementById('adminWriteBtn').classList.toggle('hidden', !isAdmin);
-        }
-
-        function openPostModal() { document.getElementById('postModal').classList.remove('hidden'); }
-        function closePostModal() { document.getElementById('postModal').classList.add('hidden'); }
-
-        async function fetchPosts() {
-            const { data, error } = await supabase.from('posts').select('*');
+        async function testInsert() {
+            alert("1번: 버튼 클릭 감지됨!");
+            
+            const { error } = await supabase.from('posts').insert([{
+                id: Date.now(),
+                title: "테스트 기사 제목입니다",
+                content: "이것은 강제 테스트 내용입니다.",
+                author: "관리자",
+                category: "ARTICLE",
+                date: "2026-03-20"
+            }]);
+            
             if (error) {
-                alert("불러오기 에러: " + error.message);
-                return;
-            }
-            const container = document.getElementById('postsList');
-            container.innerHTML = data.length === 0 ? '<p class="text-xs text-center text-slate-400">게시물 없음</p>' : '';
-            data.forEach(p => {
-                container.innerHTML += `<div class="p-4 bg-white rounded-xl border"><h4 class="font-bold text-sm">${p.title}</h4><p class="text-xs text-slate-600">${p.content}</p></div>`;
-            });
-        }
-
-        async function handleCreatePost(e) {
-            e.preventDefault();
-            try {
-                const title = document.getElementById('postTitle').value;
-                const content = document.getElementById('postContent').value;
-                const fileInput = document.getElementById('postFileInput');
-                let dataUrl = null;
-
-                if (fileInput.files[0]) {
-                    const file = fileInput.files[0];
-                    const fileName = `${Date.now()}_${file.name}`;
-                    const { error: uploadError } = await supabase.storage.from('uploads').upload(fileName, file);
-                    if (uploadError) throw new Error("스토리지 업로드 실패: " + uploadError.message);
-                    
-                    const { data: urlData } = supabase.storage.from('uploads').getPublicUrl(fileName);
-                    dataUrl = urlData.publicUrl;
-                }
-
-                const newPost = {
-                    id: Date.now(),
-                    title: title,
-                    content: content,
-                    author: "관리자",
-                    category: "ARTICLE",
-                    date: new Date().toISOString(),
-                    dataurl: dataUrl
-                };
-
-                const { error: insertError } = await supabase.from('posts').insert([newPost]);
-                if (insertError) throw new Error("DB 저장 실패: " + insertError.message);
-
-                alert("등록 성공!");
-                closePostModal();
-                fetchPosts();
-            } catch (err) {
-                alert("❌ 에러 발생: " + err.message);
+                alert("❌ DB 저장 실패 에러: " + error.message);
+            } else {
+                alert("🎉 성공! 데이터베이스에 글이 정상적으로 박혔습니다!");
             }
         }
     </script>
 </body>
 </html>
-
