@@ -10,6 +10,13 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Font (Pretendard) -->
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <!-- Supabase SDK 불러오기 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      const SUPABASE_URL = "https://djecswoekpqiydrlriyd.supabase.co";
+      const SUPABASE_KEY = "sb_publishable_-NUgsUBSfLy6qyyYXvMlFA_EOqLZeya";
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    </script>
     <style>
         body {
             font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
@@ -432,9 +439,6 @@
     </div>
 
     <script>
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzW4wQkE-Z84vc1mxkWVGufiNu-dMpHULdFa-L9bmy8NT46y3sk0KWlfq58RO8CgHAbdA/exec";
-
-        const STORAGE_KEY = 'sisatalk_posts_cache_v13';
         const ADMIN_STORAGE_KEY = 'sisatalk_admin_auth_v2';
         const ADMIN_CODE = "1004";
 
@@ -471,187 +475,54 @@
         window.handleCreatePost = handleCreatePost;
 
         /**
-         * 초강력 이미지 압축 (최대 너비 600px, 퀄리티 0.4)
+         * 파일/사진 업로드 처리 함수 (Supabase Storage 연동)
          */
-        function compressImage(file, maxWidth = 600, maxHeight = 600, quality = 0.4) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        let width = img.width;
-                        let height = img.height;
+        async function uploadFileAndGetURL(file) {
+            if (!file) return null;
+            const fileName = `${Date.now()}_${file.name}`;
 
-                        if (width > maxWidth || height > maxHeight) {
-                            if (width > height) {
-                                height = Math.round((height * maxWidth) / width);
-                                width = maxWidth;
-                            } else {
-                                width = Math.round((width * maxHeight) / height);
-                                height = maxHeight;
-                            }
-                        }
+            // Supabase Storage 'uploads' 버킷에 파일 업로드
+            const { data, error } = await supabase.storage
+                .from('uploads')
+                .upload(fileName, file);
 
-                        const canvas = document.createElement('canvas');
-                        canvas.width = width;
-                        canvas.height = height;
+            if (error) {
+                console.error("파일 업로드 에러:", error);
+                return null;
+            }
 
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
+            // 사진/파일에 접근할 수 있는 Public URL 가져오기
+            const { data: publicUrlData } = supabase.storage
+                .from('uploads')
+                .getPublicUrl(fileName);
 
-                        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
-                        resolve(compressedDataUrl);
-                    };
-                    img.onerror = (err) => reject(err);
-                    img.src = e.target.result;
-                };
-                reader.onerror = (err) => reject(err);
-                reader.readAsDataURL(file);
-            });
+            return {
+                url: publicUrlData.publicUrl,
+                meta: { name: file.name, size: (file.size / (1024 * 1024)).toFixed(2) + " MB", type: file.type }
+            };
         }
 
         /**
-         * 파일 변환 처리기
+         * 글 목록 불러오기 (Supabase DB 연동)
          */
-        async function processFile(file) {
-            if (!file) return { dataUrl: null, fileMeta: null, error: null };
-
-            try {
-                let dataUrl = null;
-                const isImage = file.type.startsWith('image/');
-
-                if (isImage) {
-                    dataUrl = await compressImage(file);
-                } else {
-                    dataUrl = await new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onload = (e) => resolve(e.target.result);
-                        reader.onerror = (e) => reject(e);
-                        reader.readAsDataURL(file);
-                    });
-                }
-
-                const fileMeta = {
-                    name: file.name,
-                    size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
-                    type: isImage ? 'image/jpeg' : file.type
-                };
-
-                return { dataUrl, fileMeta, error: null };
-
-            } catch (err) {
-                console.error("파일 처리 중 오류:", err);
-                return { dataUrl: null, fileMeta: null, error: "파일 처리 중 오류가 발생했습니다." };
-            }
-        }
-
-        // 구글 시트 데이터 가져오기 (입력 중 상태 체크하여 리셋 방지)
         async function fetchPostsFromCloud() {
-            if (!GAS_URL) return;
-
-            // 사용자 작성 중 및 모달창 열림 상태 감지
-            const activeElem = document.activeElement;
-            const isUserTyping = activeElem && (activeElem.tagName === 'INPUT' || activeElem.tagName === 'TEXTAREA');
-            const isDetailOpen = !document.getElementById('detailModal').classList.contains('hidden');
-            const isReportOpen = !document.getElementById('reportModal').classList.contains('hidden');
-            const isPostOpen = !document.getElementById('postModal').classList.contains('hidden');
-            const isAdminOpen = !document.getElementById('adminModal').classList.contains('hidden');
-
-            if (isUserTyping || isDetailOpen || isReportOpen || isPostOpen || isAdminOpen) {
-                return; // 작성 중이거나 모달이 활성화된 동안은 백그라운드 동기화 렌더링 건너뜀
-            }
-
             try {
-                const res = await fetch(GAS_URL, { mode: 'cors' });
-                if (!res.ok) throw new Error('Network response was not ok');
-                const data = await res.json();
-                if (Array.isArray(data) && data.length > 0) {
-                    posts = data;
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
-                    renderPosts();
-                } else if (posts.length === 0) {
-                    seedInitialData(true);
-                }
-            } catch (err) {
-                console.info("Info: Running in offline/sandboxed mode using local storage cache.");
-            }
-        }
+                const { data, error } = await supabase
+                    .from('posts')
+                    .select('*')
+                    .order('createdAt', { ascending: false });
 
-        // 구글 시트에 동기화
-        async function syncPostToCloud() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
-            renderPosts();
-            if (currentPostId) renderComments();
-
-            if (!GAS_URL) return;
-
-            try {
-                await fetch(GAS_URL, {
-                    method: 'POST',
-                    mode: 'cors',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify(posts)
-                });
-            } catch (e) {
-                // Ignore sync errors in sandbox environments
-            }
-        }
-
-        async function removePostFromCloud(postId) {
-            posts = posts.filter(p => p.id !== postId);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
-            renderPosts();
-
-            if (!GAS_URL) return;
-
-            try {
-                await fetch(GAS_URL, {
-                    method: 'POST',
-                    mode: 'cors',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify(posts)
-                });
-            } catch (e) {
-                // Ignore sync errors in sandbox environments
-            }
-        }
-
-        async function seedInitialData(syncToCloud = false) {
-            const nowId = Date.now();
-            const initPost = {
-                id: nowId,
-                category: "NOTICE",
-                title: "📌 시사톡톡 서비스 안내 및 이용 수칙",
-                author: "운영팀",
-                content: "시사톡톡에 오신 것을 환영합니다!\n이곳에서 최신 시사 소식을 확인하고 사진, PDF, PPT 등의 문서를 첨부하여 의견을 나눠보세요.",
-                date: new Date().toISOString().split('T')[0],
-                comments: [
-                    { id: 101, author: "시사친구", text: "사진과 문서 미리보기가 정말 편리하네요! 👍", date: "2026-08-22 14:00" }
-                ],
-                createdAt: nowId
-            };
-            posts = [initPost];
-            if (syncToCloud) {
-                await syncPostToCloud();
-            } else {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+                if (error) throw error;
+                posts = data || [];
                 renderPosts();
+            } catch (err) {
+                console.error("데이터 로딩 실패:", err);
             }
         }
 
         async function initSystem() {
             updateAdminUI();
-
-            const cached = localStorage.getItem(STORAGE_KEY);
-            if (cached) {
-                try {
-                    posts = JSON.parse(cached);
-                    renderPosts();
-                } catch (e) {}
-            }
-
             await fetchPostsFromCloud();
-            setInterval(fetchPostsFromCloud, 5000);
         }
 
         window.addEventListener('load', () => {
@@ -837,7 +708,7 @@
             fileCont.classList.add('hidden');
 
             if (post.dataUrl) {
-                const isImage = (post.file?.type?.startsWith('image/')) || post.dataUrl.includes('image/') || post.dataUrl.includes('drive.google.com');
+                const isImage = (post.file?.type?.startsWith('image/')) || post.dataUrl.includes('image/') || post.dataUrl.includes('supabase.co');
                 const isPdf = (post.file?.type === 'application/pdf') || post.dataUrl.endsWith('.pdf');
 
                 mediaArea.classList.remove('hidden');
@@ -882,8 +753,13 @@
             if (!isAdmin) return;
             if (!confirm("정말 이 게시물을 삭제하시겠습니까?")) return;
 
-            await removePostFromCloud(postId);
-            showToast("게시물이 삭제되었습니다.");
+            const { error } = await supabase.from('posts').delete().eq('id', postId);
+            if (!error) {
+                await fetchPostsFromCloud();
+                showToast("게시물이 삭제되었습니다.");
+            } else {
+                alert("삭제 중 오류가 발생했습니다.");
+            }
         }
 
         async function deleteCurrentPost() {
@@ -892,8 +768,14 @@
 
             const targetId = currentPostId;
             closeDetailModal();
-            await removePostFromCloud(targetId);
-            showToast("게시물이 삭제되었습니다.");
+            
+            const { error } = await supabase.from('posts').delete().eq('id', targetId);
+            if (!error) {
+                await fetchPostsFromCloud();
+                showToast("게시물이 삭제되었습니다.");
+            } else {
+                alert("삭제 중 오류가 발생했습니다.");
+            }
         }
 
         function enablePostEditMode() {
@@ -924,16 +806,20 @@
             const newContent = document.getElementById('editPostContent').value.trim();
             if (!newTitle || !newContent) return;
 
-            post.title = newTitle;
-            post.content = newContent;
+            const { error } = await supabase
+                .from('posts')
+                .update({ title: newTitle, content: newContent })
+                .eq('id', currentPostId);
 
-            await syncPostToCloud();
-
-            document.getElementById('detailTitle').textContent = newTitle;
-            document.getElementById('detailContent').textContent = newContent;
-
-            cancelPostEdit();
-            showToast("게시물이 수정되었습니다.");
+            if (!error) {
+                await fetchPostsFromCloud();
+                document.getElementById('detailTitle').textContent = newTitle;
+                document.getElementById('detailContent').textContent = newContent;
+                cancelPostEdit();
+                showToast("게시물이 수정되었습니다.");
+            } else {
+                alert("수정 중 오류가 발생했습니다.");
+            }
         }
 
         function insertEmoji(emoji) {
@@ -1018,25 +904,46 @@
             const newText = inputElem.value.trim();
             if (!newText) return;
 
-            post.comments = (post.comments || []).map(c => {
+            const updatedComments = (post.comments || []).map(c => {
                 if (c.id === commentId) {
                     return { ...c, text: newText };
                 }
                 return c;
             });
 
-            await syncPostToCloud();
-            editingCommentId = null;
-            showToast("댓글이 수정되었습니다.");
+            const { error } = await supabase
+                .from('posts')
+                .update({ comments: updatedComments })
+                .eq('id', currentPostId);
+
+            if (!error) {
+                await fetchPostsFromCloud();
+                editingCommentId = null;
+                renderComments();
+                showToast("댓글이 수정되었습니다.");
+            } else {
+                alert("댓글 수정 중 오류가 발생했습니다.");
+            }
         }
 
         async function deleteComment(commentId) {
             const post = posts.find(p => p.id === currentPostId);
             if (!post) return;
 
-            post.comments = (post.comments || []).filter(c => c.id !== commentId);
-            await syncPostToCloud();
-            showToast("댓글이 삭제되었습니다.");
+            const updatedComments = (post.comments || []).filter(c => c.id !== commentId);
+
+            const { error } = await supabase
+                .from('posts')
+                .update({ comments: updatedComments })
+                .eq('id', currentPostId);
+
+            if (!error) {
+                await fetchPostsFromCloud();
+                renderComments();
+                showToast("댓글이 삭제되었습니다.");
+            } else {
+                alert("댓글 삭제 중 오류가 발생했습니다.");
+            }
         }
 
         async function handleAddComment(e) {
@@ -1061,12 +968,21 @@
                     date: timeStr
                 };
 
-                if (!post.comments) post.comments = [];
-                post.comments.push(newComment);
+                const updatedComments = [...(post.comments || []), newComment];
 
-                await syncPostToCloud();
-                textInput.value = '';
-                showToast("댓글이 등록되었습니다.");
+                const { error } = await supabase
+                    .from('posts')
+                    .update({ comments: updatedComments })
+                    .eq('id', currentPostId);
+
+                if (!error) {
+                    await fetchPostsFromCloud();
+                    textInput.value = '';
+                    renderComments();
+                    showToast("댓글이 등록되었습니다.");
+                } else {
+                    alert("댓글 등록 중 오류가 발생했습니다.");
+                }
             }
         }
 
@@ -1141,15 +1057,13 @@
             const title = document.getElementById('reportTitle').value.trim();
             const content = document.getElementById('reportContent').value.trim();
             const fileInput = document.getElementById('reportFileInput');
-            const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+            const selectedFile = fileInput && fileInput.files ? fileInput.files[0] : null;
 
             if (!title || !content) return;
 
-            const { dataUrl, fileMeta, error } = await processFile(file);
-
-            if (error) {
-                alert(error);
-                return;
+            let fileData = null;
+            if (selectedFile) {
+                fileData = await uploadFileAndGetURL(selectedFile);
             }
 
             const now = new Date();
@@ -1164,17 +1078,19 @@
                 content: content,
                 date: todayStr,
                 comments: [],
-                createdAt: postId
+                createdAt: postId,
+                dataUrl: fileData ? fileData.url : null,
+                file: fileData ? fileData.meta : null
             };
 
-            if (dataUrl) newReport.dataUrl = dataUrl;
-            if (fileMeta) newReport.file = fileMeta;
-
-            posts.unshift(newReport);
-            await syncPostToCloud();
-
-            closeReportModal();
-            showToast("익명 불편신고가 접수되었습니다.");
+            const { error } = await supabase.from('posts').insert([newReport]);
+            if (!error) {
+                await fetchPostsFromCloud();
+                closeReportModal();
+                showToast("익명 불편신고가 접수되었습니다.");
+            } else {
+                alert("신고 접수 중 오류가 발생했습니다.");
+            }
         }
 
         function openPostModal() {
@@ -1204,13 +1120,12 @@
             const title = document.getElementById('postTitle').value.trim();
             const content = document.getElementById('postContent').value.trim();
             const fileInput = document.getElementById('postFileInput');
-            const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+            const selectedFile = fileInput && fileInput.files ? fileInput.files[0] : null;
 
-            const { dataUrl, fileMeta, error } = await processFile(file);
-
-            if (error) {
-                alert(error);
-                return;
+            // 파일이 있다면 Storage에 먼저 업로드
+            let fileData = null;
+            if (selectedFile) {
+                fileData = await uploadFileAndGetURL(selectedFile);
             }
 
             const now = new Date();
@@ -1225,17 +1140,20 @@
                 content: content,
                 date: todayStr,
                 comments: [],
-                createdAt: postId
+                createdAt: Date.now(),
+                dataUrl: fileData ? fileData.url : null,
+                file: fileData ? fileData.meta : null
             };
 
-            if (dataUrl) newPost.dataUrl = dataUrl;
-            if (fileMeta) newPost.file = fileMeta;
-
-            posts.unshift(newPost);
-            await syncPostToCloud();
-
-            closePostModal();
-            showToast("기사가 등록되었습니다.");
+            // Supabase DB에 저장
+            const { error } = await supabase.from('posts').insert([newPost]);
+            if (!error) {
+                await fetchPostsFromCloud(); // 목록 새로고침
+                closePostModal();
+                showToast("기사가 등록되었습니다.");
+            } else {
+                alert("기사 등록 중 오류가 발생했습니다.");
+            }
         }
 
         function showToast(msg) {
@@ -1260,3 +1178,4 @@
     </script>
 </body>
 </html>
+
