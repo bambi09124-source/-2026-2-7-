@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -503,14 +502,14 @@
         }
 
         /**
-         * 글 목록 불러오기 (Supabase DB 연동)
+         * 글 목록 불러오기 (Supabase DB 연동) - 소문자 createdat 사용
          */
         async function fetchPostsFromCloud() {
             try {
                 const { data, error } = await supabase
                     .from('posts')
                     .select('*')
-                    .order('createdAt', { ascending: false });
+                    .order('createdat', { ascending: false });
 
                 if (error) throw error;
                 posts = data || [];
@@ -571,7 +570,7 @@
             filtered.sort((a, b) => {
                 if (a.category === 'NOTICE' && b.category !== 'NOTICE') return -1;
                 if (a.category !== 'NOTICE' && b.category === 'NOTICE') return 1;
-                return (b.createdAt || b.id) - (a.createdAt || a.id);
+                return (b.createdat || b.id) - (a.createdat || a.id);
             });
 
             container.innerHTML = '';
@@ -590,7 +589,7 @@
             filtered.forEach(post => {
                 const isNotice = post.category === 'NOTICE';
                 const isReport = post.category === 'REPORT';
-                const isImage = post.file?.type?.startsWith('image/') || (post.dataUrl && post.dataUrl.includes('image/'));
+                const isImage = post.file?.type?.startsWith('image/') || (post.dataurl && post.dataurl.includes('image/'));
                 const isDoc = post.file && !isImage;
                 
                 const card = document.createElement('div');
@@ -637,9 +636,9 @@
                             </div>
                         </div>
 
-                        ${post.dataUrl && isImage ? `
+                        ${post.dataurl && isImage ? `
                             <div class="w-full h-36 overflow-hidden rounded-xl my-1 bg-slate-100 border border-slate-100">
-                                <img src="${post.dataUrl}" alt="미리보기" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                <img src="${post.dataurl}" alt="미리보기" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                             </div>
                         ` : ''}
 
@@ -707,23 +706,23 @@
             pdfCont.classList.add('hidden');
             fileCont.classList.add('hidden');
 
-            if (post.dataUrl) {
-                const isImage = (post.file?.type?.startsWith('image/')) || post.dataUrl.includes('image/') || post.dataUrl.includes('supabase.co');
-                const isPdf = (post.file?.type === 'application/pdf') || post.dataUrl.endsWith('.pdf');
+            if (post.dataurl) {
+                const isImage = (post.file?.type?.startsWith('image/')) || post.dataurl.includes('image/') || post.dataurl.includes('supabase.co');
+                const isPdf = (post.file?.type === 'application/pdf') || post.dataurl.endsWith('.pdf');
 
                 mediaArea.classList.remove('hidden');
                 if (isImage) {
-                    detailImg.src = post.dataUrl;
+                    detailImg.src = post.dataurl;
                     imgCont.classList.remove('hidden');
                 } else if (isPdf) {
-                    pdfFrame.src = post.dataUrl;
+                    pdfFrame.src = post.dataurl;
                     pdfCont.classList.remove('hidden');
                 }
 
                 fileCont.classList.remove('hidden');
                 document.getElementById('detailFileName').textContent = post.file ? post.file.name : "첨부 파일";
                 document.getElementById('detailFileSize').textContent = post.file ? post.file.size : "";
-                btnDownload.href = post.dataUrl;
+                btnDownload.href = post.dataurl;
                 if (post.file) btnDownload.download = post.file.name;
             }
 
@@ -1078,8 +1077,8 @@
                 content: content,
                 date: todayStr,
                 comments: [],
-                createdAt: postId,
-                dataUrl: fileData ? fileData.url : null,
+                createdat: postId,
+                dataurl: fileData ? fileData.url : null,
                 file: fileData ? fileData.meta : null
             };
 
@@ -1140,8 +1139,8 @@
                 content: content,
                 date: todayStr,
                 comments: [],
-                createdAt: postId,
-                dataUrl: fileData ? fileData.url : null,
+                createdat: postId,
+                dataurl: fileData ? fileData.url : null,
                 file: fileData ? fileData.meta : null
             };
 
@@ -1178,4 +1177,4 @@
     </script>
 </body>
 </html>
-```
+
