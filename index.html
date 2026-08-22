@@ -31,6 +31,12 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #2dd4bf;
         }
+        .pdf-viewer {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col antialiased selection:bg-teal-100 selection:text-teal-800">
@@ -119,12 +125,12 @@
 
     </main>
 
-    <!-- Modal: Detail & Comments -->
-    <div id="detailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 overflow-y-auto">
-        <div class="bg-white rounded-2xl max-w-xl w-full my-auto shadow-2xl border border-slate-100 flex flex-col max-h-[88vh] overflow-hidden">
+    <!-- Modal: Detail & Comments & Media Preview -->
+    <div id="detailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
+        <div class="bg-white rounded-2xl max-w-xl w-full h-[92vh] my-auto shadow-2xl border border-slate-100 flex flex-col justify-between overflow-hidden">
             
             <!-- Modal Header -->
-            <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
                 <div class="flex items-center gap-2">
                     <span id="detailCategoryBadge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full"></span>
                     <span class="text-xs font-semibold text-slate-400">상세보기</span>
@@ -160,9 +166,17 @@
                         </div>
                     </div>
 
-                    <div id="detailContent" class="text-slate-700 text-xs sm:text-sm leading-relaxed whitespace-pre-line min-h-[60px]"></div>
+                    <!-- Image / PDF Preview Area -->
+                    <div id="detailMediaArea" class="space-y-3 hidden">
+                        <div id="detailImageContainer" class="hidden">
+                            <img id="detailImg" src="" alt="첨부 이미지" class="w-full max-h-80 object-contain rounded-xl border border-slate-100 bg-slate-50 shadow-sm" />
+                        </div>
+                        <div id="detailPdfContainer" class="hidden">
+                            <iframe id="pdfFrame" class="pdf-viewer" src=""></iframe>
+                        </div>
+                    </div>
 
-                    <!-- File Section -->
+                    <!-- File Download Section -->
                     <div id="detailFileContainer" class="hidden pt-1">
                         <div class="p-3 rounded-xl bg-teal-50/50 border border-teal-100 flex items-center justify-between">
                             <div class="flex items-center gap-2.5 overflow-hidden">
@@ -174,11 +188,13 @@
                                     <p id="detailFileSize" class="text-[10px] text-slate-400"></p>
                                 </div>
                             </div>
-                            <button onclick="downloadDummyFile()" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-teal-700 bg-white border border-teal-200 hover:bg-teal-50 rounded-full transition-colors shadow-sm shrink-0">
-                                <i data-lucide="download" class="w-3 h-3"></i> 다운로드
-                            </button>
+                            <a id="btnDownload" href="#" download target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-teal-700 bg-white border border-teal-200 hover:bg-teal-50 rounded-full transition-colors shadow-sm shrink-0">
+                                <i data-lucide="download" class="w-3 h-3"></i> 보기 / 다운로드
+                            </a>
                         </div>
                     </div>
+
+                    <div id="detailContent" class="text-slate-700 text-xs sm:text-sm leading-relaxed whitespace-pre-line min-h-[60px]"></div>
                 </div>
 
                 <!-- Post Edit Mode (Admin Only) -->
@@ -211,14 +227,14 @@
                     <!-- Comments List -->
                     <div id="commentsList" class="flex flex-col gap-2.5"></div>
 
-                    <!-- Add Comment Form -->
+                    <!-- Comment Add Form with Emoji Bar -->
                     <form onsubmit="handleAddComment(event)" class="mt-3 pt-2 space-y-2">
                         <div class="w-full sm:w-1/2">
                             <input type="text" id="commentAuthor" required placeholder="작성자 이름" 
                                 class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-teal-500/20">
                         </div>
 
-                        <!-- Emoji Bar -->
+                        <!-- Emoji Selection Bar -->
                         <div class="flex items-center gap-1 overflow-x-auto py-1 scrollbar-none">
                             <span class="text-[10px] font-bold text-slate-400 shrink-0">이모지:</span>
                             <button type="button" onclick="insertEmoji('👍')" class="hover:scale-125 transition-transform text-sm p-1">👍</button>
@@ -232,7 +248,7 @@
                         </div>
 
                         <div class="flex gap-2">
-                            <textarea id="commentText" required rows="2" placeholder="댓글을 작성해 주세요..." 
+                            <textarea id="commentText" required rows="2" placeholder="따뜻하고 건설적인 댓글을 남겨주세요..." 
                                 class="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-teal-500/20 resize-none"></textarea>
                             <button type="submit" id="btnSubmitComment" class="px-4 py-1.5 bg-slate-900 hover:bg-teal-600 text-white font-bold text-xs rounded-xl transition-all shadow-sm shrink-0 flex items-center justify-center">
                                 등록
@@ -285,9 +301,9 @@
     </div>
 
     <!-- Modal: Anonymous Report -->
-    <div id="reportModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 overflow-y-auto">
-        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-4">
+    <div id="reportModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
+        <div class="bg-white rounded-2xl max-w-md w-full h-[92vh] p-5 shadow-2xl border border-slate-100 flex flex-col justify-between overflow-hidden">
+            <div class="flex justify-between items-center mb-2 shrink-0">
                 <div class="flex items-center gap-1.5 text-amber-600">
                     <i data-lucide="alert-triangle" class="w-5 h-5"></i>
                     <h3 class="text-base font-bold text-slate-900">익명 불편신고함</h3>
@@ -297,24 +313,35 @@
                 </button>
             </div>
 
-            <p class="text-xs text-slate-500 mb-4 leading-relaxed">
+            <p class="text-xs text-slate-500 mb-2 leading-relaxed shrink-0">
                 시사톡톡을 이용하면서 불편했던 점이나 개선 사항을 익명으로 자유롭게 남겨주세요.
             </p>
 
-            <form onsubmit="handleCreateReport(event)" class="space-y-3.5">
-                <div>
-                    <label class="block text-[11px] font-bold text-slate-700 mb-1">제목</label>
-                    <input type="text" id="reportTitle" required placeholder="신고/건의 제목을 입력하세요"
-                        class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 text-xs">
+            <form onsubmit="handleCreateReport(event)" class="flex-1 flex flex-col justify-between overflow-hidden space-y-3">
+                <div class="flex-1 overflow-y-auto space-y-3.5 pr-1">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">제목</label>
+                        <input type="text" id="reportTitle" required placeholder="신고/건의 제목을 입력하세요"
+                            class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 text-xs">
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">내용</label>
+                        <textarea id="reportContent" rows="4" required placeholder="구체적인 내용을 적어주세요..."
+                            class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 text-xs resize-none"></textarea>
+                    </div>
+
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                        <label class="text-[11px] font-bold text-slate-800 flex items-center gap-1">
+                            <i data-lucide="paperclip" class="w-3.5 h-3.5 text-amber-600"></i>
+                            사진 또는 문서 첨부
+                        </label>
+                        <input type="file" id="reportFileInput" accept="image/*,.pdf,.ppt,.pptx,.doc,.docx,.txt"
+                            class="block w-full text-[11px] text-slate-500 file:mr-2.5 file:py-1.5 file:px-2.5 file:rounded-full file:border-0 file:text-[11px] file:font-bold file:bg-amber-100 file:text-amber-800 cursor-pointer">
+                    </div>
                 </div>
 
-                <div>
-                    <label class="block text-[11px] font-bold text-slate-700 mb-1">내용</label>
-                    <textarea id="reportContent" rows="4" required placeholder="구체적인 내용을 적어주세요..."
-                        class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 text-xs resize-none"></textarea>
-                </div>
-
-                <div class="flex justify-end gap-1.5 pt-1">
+                <div class="flex justify-end gap-1.5 pt-2 border-t border-slate-100 shrink-0">
                     <button type="button" onclick="closeReportModal()" class="px-3.5 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
                         취소
                     </button>
@@ -327,64 +354,66 @@
     </div>
 
     <!-- Modal: Admin Only Post Write -->
-    <div id="postModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 overflow-y-auto">
-        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-4">
+    <div id="postModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
+        <div class="bg-white rounded-2xl max-w-md w-full h-[92vh] p-5 shadow-2xl border border-slate-100 flex flex-col justify-between overflow-hidden">
+            <div class="flex justify-between items-center mb-2 shrink-0">
                 <h3 class="text-base font-bold text-slate-900">기사 및 공지 작성 (관리자 전용)</h3>
                 <button onclick="closePostModal()" class="text-slate-400 hover:text-slate-600">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
 
-            <form onsubmit="handleCreatePost(event)" class="space-y-3.5">
-                <div>
-                    <label class="block text-[11px] font-bold text-slate-700 mb-1">게시물 분류</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <label class="cursor-pointer">
-                            <input type="radio" name="postCategory" value="ARTICLE" checked class="peer sr-only">
-                            <div class="p-2.5 text-center rounded-xl border border-slate-200 peer-checked:border-teal-500 peer-checked:bg-teal-50/50 peer-checked:text-teal-700 text-xs font-bold transition-all">
-                                📰 일반 기사
-                            </div>
-                        </label>
-                        <label class="cursor-pointer">
-                            <input type="radio" name="postCategory" value="NOTICE" class="peer sr-only">
-                            <div class="p-2.5 text-center rounded-xl border border-slate-200 peer-checked:border-teal-500 peer-checked:bg-teal-50/50 peer-checked:text-teal-700 text-xs font-bold transition-all">
-                                📌 공지사항
-                            </div>
-                        </label>
+            <form onsubmit="handleCreatePost(event)" class="flex-1 flex flex-col justify-between overflow-hidden space-y-3">
+                <div class="flex-1 overflow-y-auto space-y-3.5 pr-1">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">게시물 분류</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="postCategory" value="ARTICLE" checked class="peer sr-only">
+                                <div class="p-2.5 text-center rounded-xl border border-slate-200 peer-checked:border-teal-500 peer-checked:bg-teal-50/50 peer-checked:text-teal-700 text-xs font-bold transition-all">
+                                    📰 일반 기사
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="postCategory" value="NOTICE" class="peer sr-only">
+                                <div class="p-2.5 text-center rounded-xl border border-slate-200 peer-checked:border-teal-500 peer-checked:bg-teal-50/50 peer-checked:text-teal-700 text-xs font-bold transition-all">
+                                    📌 공지사항
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">작성자</label>
+                        <input type="text" id="postAuthor" value="운영팀" required
+                            class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 text-xs bg-slate-50">
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">제목</label>
+                        <input type="text" id="postTitle" required placeholder="기사 제목을 입력하세요"
+                            class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 text-xs">
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">내용</label>
+                        <textarea id="postContent" rows="4" required placeholder="시사 뉴스 내용을 입력하세요..."
+                            class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 text-xs resize-none"></textarea>
+                    </div>
+
+                    <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <label class="text-[11px] font-bold text-slate-800 flex items-center gap-1">
+                                <i data-lucide="paperclip" class="w-3.5 h-3.5 text-teal-600"></i>
+                                사진 / 문서 / PPT / PDF 첨부
+                            </label>
+                        </div>
+                        <input type="file" id="postFileInput" accept="image/*,.pdf,.ppt,.pptx,.doc,.docx,.txt"
+                            class="block w-full text-[11px] text-slate-500 file:mr-2.5 file:py-1.5 file:px-2.5 file:rounded-full file:border-0 file:text-[11px] file:font-bold file:bg-teal-100 file:text-teal-800 cursor-pointer">
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-[11px] font-bold text-slate-700 mb-1">작성자</label>
-                    <input type="text" id="postAuthor" value="운영팀" required
-                        class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 text-xs bg-slate-50">
-                </div>
-
-                <div>
-                    <label class="block text-[11px] font-bold text-slate-700 mb-1">제목</label>
-                    <input type="text" id="postTitle" required placeholder="기사 제목을 입력하세요"
-                        class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 text-xs">
-                </div>
-
-                <div>
-                    <label class="block text-[11px] font-bold text-slate-700 mb-1">내용</label>
-                    <textarea id="postContent" rows="4" required placeholder="시사 뉴스 내용을 입력하세요..."
-                        class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 text-xs resize-none"></textarea>
-                </div>
-
-                <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
-                    <div class="flex items-center justify-between">
-                        <label class="text-[11px] font-bold text-slate-800 flex items-center gap-1">
-                            <i data-lucide="paperclip" class="w-3.5 h-3.5 text-teal-600"></i>
-                            자료 파일 첨부
-                        </label>
-                    </div>
-                    <input type="file" id="postFileInput"
-                        class="block w-full text-[11px] text-slate-500 file:mr-2.5 file:py-1.5 file:px-2.5 file:rounded-full file:border-0 file:text-[11px] file:font-bold file:bg-teal-100 file:text-teal-800 cursor-pointer">
-                </div>
-
-                <div class="flex justify-end gap-1.5 pt-1">
+                <div class="flex justify-end gap-1.5 pt-2 border-t border-slate-100 shrink-0">
                     <button type="button" onclick="closePostModal()" class="px-3.5 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
                         취소
                     </button>
@@ -402,12 +431,10 @@
         <span id="toastMessage">알림 내용</span>
     </div>
 
-    <!-- Google Sheets Cloud Sync Engine -->
     <script>
-        // 구글 앱스 크립트 웹 앱 URL 적용
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbxu0COQhftWCsRyRpPTs1B5LduDdB9EpM4UrVrhyt4jnFXl25JwJlNt5w-Hl6DMTIPdcw/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzW4wQkE-Z84vc1mxkWVGufiNu-dMpHULdFa-L9bmy8NT46y3sk0KWlfq58RO8CgHAbdA/exec";
 
-        const STORAGE_KEY = 'sisatalk_posts_cache_v9';
+        const STORAGE_KEY = 'sisatalk_posts_cache_v13';
         const ADMIN_STORAGE_KEY = 'sisatalk_admin_auth_v2';
         const ADMIN_CODE = "1004";
 
@@ -417,7 +444,7 @@
         let selectedCategory = "ALL";
         let editingCommentId = null;
 
-        // Window 매핑
+        // Window 전역 함수 매핑
         window.filterCategory = filterCategory;
         window.filterPosts = filterPosts;
         window.openDetailModal = openDetailModal;
@@ -442,46 +469,131 @@
         window.openPostModal = openPostModal;
         window.closePostModal = closePostModal;
         window.handleCreatePost = handleCreatePost;
-        window.downloadDummyFile = downloadDummyFile;
 
-        // 구글 시트 데이터 불러오기
-        async function fetchPostsFromCloud() {
-            if (!GAS_URL || GAS_URL.includes("여기에")) return;
+        /**
+         * 초강력 이미지 압축 (최대 너비 600px, 퀄리티 0.4)
+         */
+        function compressImage(file, maxWidth = 600, maxHeight = 600, quality = 0.4) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > maxWidth || height > maxHeight) {
+                            if (width > height) {
+                                height = Math.round((height * maxWidth) / width);
+                                width = maxWidth;
+                            } else {
+                                width = Math.round((width * maxHeight) / height);
+                                height = maxHeight;
+                            }
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+                        resolve(compressedDataUrl);
+                    };
+                    img.onerror = (err) => reject(err);
+                    img.src = e.target.result;
+                };
+                reader.onerror = (err) => reject(err);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        /**
+         * 파일 변환 처리기
+         */
+        async function processFile(file) {
+            if (!file) return { dataUrl: null, fileMeta: null, error: null };
+
             try {
-                const res = await fetch(GAS_URL);
+                let dataUrl = null;
+                const isImage = file.type.startsWith('image/');
+
+                if (isImage) {
+                    dataUrl = await compressImage(file);
+                } else {
+                    dataUrl = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => resolve(e.target.result);
+                        reader.onerror = (e) => reject(e);
+                        reader.readAsDataURL(file);
+                    });
+                }
+
+                const fileMeta = {
+                    name: file.name,
+                    size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
+                    type: isImage ? 'image/jpeg' : file.type
+                };
+
+                return { dataUrl, fileMeta, error: null };
+
+            } catch (err) {
+                console.error("파일 처리 중 오류:", err);
+                return { dataUrl: null, fileMeta: null, error: "파일 처리 중 오류가 발생했습니다." };
+            }
+        }
+
+        // 구글 시트 데이터 가져오기 (입력 중 상태 체크하여 리셋 방지)
+        async function fetchPostsFromCloud() {
+            if (!GAS_URL) return;
+
+            // 사용자 작성 중 및 모달창 열림 상태 감지
+            const activeElem = document.activeElement;
+            const isUserTyping = activeElem && (activeElem.tagName === 'INPUT' || activeElem.tagName === 'TEXTAREA');
+            const isDetailOpen = !document.getElementById('detailModal').classList.contains('hidden');
+            const isReportOpen = !document.getElementById('reportModal').classList.contains('hidden');
+            const isPostOpen = !document.getElementById('postModal').classList.contains('hidden');
+            const isAdminOpen = !document.getElementById('adminModal').classList.contains('hidden');
+
+            if (isUserTyping || isDetailOpen || isReportOpen || isPostOpen || isAdminOpen) {
+                return; // 작성 중이거나 모달이 활성화된 동안은 백그라운드 동기화 렌더링 건너뜀
+            }
+
+            try {
+                const res = await fetch(GAS_URL, { mode: 'cors' });
+                if (!res.ok) throw new Error('Network response was not ok');
                 const data = await res.json();
                 if (Array.isArray(data) && data.length > 0) {
                     posts = data;
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
                     renderPosts();
-                    if (currentPostId) {
-                        const target = posts.find(p => p.id === currentPostId);
-                        if (target) renderComments();
-                    }
                 } else if (posts.length === 0) {
                     seedInitialData(true);
                 }
             } catch (err) {
-                console.error("구글 시트 연동 실패:", err);
+                console.info("Info: Running in offline/sandboxed mode using local storage cache.");
             }
         }
 
-        // 구글 시트에 데이터 저장하기
-        async function syncPostToCloud(post) {
+        // 구글 시트에 동기화
+        async function syncPostToCloud() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
             renderPosts();
             if (currentPostId) renderComments();
 
-            if (!GAS_URL || GAS_URL.includes("여기에")) return;
+            if (!GAS_URL) return;
 
             try {
                 await fetch(GAS_URL, {
                     method: 'POST',
+                    mode: 'cors',
                     headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify(posts)
                 });
             } catch (e) {
-                console.error("구글 시트 저장 실패:", e);
+                // Ignore sync errors in sandbox environments
             }
         }
 
@@ -490,16 +602,17 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
             renderPosts();
 
-            if (!GAS_URL || GAS_URL.includes("여기에")) return;
+            if (!GAS_URL) return;
 
             try {
                 await fetch(GAS_URL, {
                     method: 'POST',
+                    mode: 'cors',
                     headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify(posts)
                 });
             } catch (e) {
-                console.error("구글 시트 삭제 실패:", e);
+                // Ignore sync errors in sandbox environments
             }
         }
 
@@ -510,16 +623,16 @@
                 category: "NOTICE",
                 title: "📌 시사톡톡 서비스 안내 및 이용 수칙",
                 author: "운영팀",
-                content: "시사톡톡에 오신 것을 환영합니다!\n이곳에서 최신 시사 소식을 확인하고 의견을 나눠보세요.",
+                content: "시사톡톡에 오신 것을 환영합니다!\n이곳에서 최신 시사 소식을 확인하고 사진, PDF, PPT 등의 문서를 첨부하여 의견을 나눠보세요.",
                 date: new Date().toISOString().split('T')[0],
                 comments: [
-                    { id: 101, author: "시사톡톡", text: "게시글 및 댓글이 실시간 공유됩니다! 👍", date: "2026-08-22 12:00" }
+                    { id: 101, author: "시사친구", text: "사진과 문서 미리보기가 정말 편리하네요! 👍", date: "2026-08-22 14:00" }
                 ],
                 createdAt: nowId
             };
             posts = [initPost];
             if (syncToCloud) {
-                await syncPostToCloud(initPost);
+                await syncPostToCloud();
             } else {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
                 renderPosts();
@@ -538,7 +651,6 @@
             }
 
             await fetchPostsFromCloud();
-            // 5초마다 구글 시트에서 신규 데이터 주기적 동기화
             setInterval(fetchPostsFromCloud, 5000);
         }
 
@@ -607,6 +719,8 @@
             filtered.forEach(post => {
                 const isNotice = post.category === 'NOTICE';
                 const isReport = post.category === 'REPORT';
+                const isImage = post.file?.type?.startsWith('image/') || (post.dataUrl && post.dataUrl.includes('image/'));
+                const isDoc = post.file && !isImage;
                 
                 const card = document.createElement('div');
                 let badgeHtml = '';
@@ -634,18 +748,30 @@
                                 </h4>
                             </div>
                             <div class="flex items-center gap-1 shrink-0">
-                                ${post.file ? `
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-white text-teal-700 border border-teal-200 rounded-full text-[10px] font-bold">
-                                        <i data-lucide="paperclip" class="w-2.5 h-2.5"></i> 첨부
+                                ${isImage ? `
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-teal-50 text-teal-700 border border-teal-200 rounded-full text-[10px] font-bold">
+                                        <i data-lucide="image" class="w-2.5 h-2.5"></i> 사진
+                                    </span>
+                                ` : ''}
+                                ${isDoc ? `
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-[10px] font-bold">
+                                        <i data-lucide="file-text" class="w-2.5 h-2.5"></i> 문서
                                     </span>
                                 ` : ''}
                                 ${isAdmin ? `
-                                    <button onclick="deletePost(event, ${post.id})" class="p-1 text-slate-400 hover:text-rose-600 rounded-full">
+                                    <button onclick="deletePost(event, ${post.id})" title="게시물 삭제" class="p-1 text-slate-400 hover:text-rose-600 rounded-full transition-colors">
                                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                     </button>
                                 ` : ''}
                             </div>
                         </div>
+
+                        ${post.dataUrl && isImage ? `
+                            <div class="w-full h-36 overflow-hidden rounded-xl my-1 bg-slate-100 border border-slate-100">
+                                <img src="${post.dataUrl}" alt="미리보기" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            </div>
+                        ` : ''}
+
                         <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed">
                             ${escapeHtml(post.content)}
                         </p>
@@ -697,6 +823,39 @@
             document.getElementById('detailDate').textContent = post.date;
             document.getElementById('detailContent').textContent = post.content;
 
+            const mediaArea = document.getElementById('detailMediaArea');
+            const imgCont = document.getElementById('detailImageContainer');
+            const pdfCont = document.getElementById('detailPdfContainer');
+            const fileCont = document.getElementById('detailFileContainer');
+            const detailImg = document.getElementById('detailImg');
+            const pdfFrame = document.getElementById('pdfFrame');
+            const btnDownload = document.getElementById('btnDownload');
+
+            mediaArea.classList.add('hidden');
+            imgCont.classList.add('hidden');
+            pdfCont.classList.add('hidden');
+            fileCont.classList.add('hidden');
+
+            if (post.dataUrl) {
+                const isImage = (post.file?.type?.startsWith('image/')) || post.dataUrl.includes('image/') || post.dataUrl.includes('drive.google.com');
+                const isPdf = (post.file?.type === 'application/pdf') || post.dataUrl.endsWith('.pdf');
+
+                mediaArea.classList.remove('hidden');
+                if (isImage) {
+                    detailImg.src = post.dataUrl;
+                    imgCont.classList.remove('hidden');
+                } else if (isPdf) {
+                    pdfFrame.src = post.dataUrl;
+                    pdfCont.classList.remove('hidden');
+                }
+
+                fileCont.classList.remove('hidden');
+                document.getElementById('detailFileName').textContent = post.file ? post.file.name : "첨부 파일";
+                document.getElementById('detailFileSize').textContent = post.file ? post.file.size : "";
+                btnDownload.href = post.dataUrl;
+                if (post.file) btnDownload.download = post.file.name;
+            }
+
             const btnAdminDelete = document.getElementById('btnAdminDeleteDetail');
             const btnStartEdit = document.getElementById('btnStartPostEdit');
 
@@ -706,15 +865,6 @@
             } else {
                 btnAdminDelete.classList.add('hidden');
                 btnStartEdit.classList.add('hidden');
-            }
-
-            const fileContainer = document.getElementById('detailFileContainer');
-            if (post.file) {
-                document.getElementById('detailFileName').textContent = post.file.name;
-                document.getElementById('detailFileSize').textContent = post.file.size;
-                fileContainer.classList.remove('hidden');
-            } else {
-                fileContainer.classList.add('hidden');
             }
 
             renderComments();
@@ -730,6 +880,7 @@
         async function deletePost(e, postId) {
             if (e) e.stopPropagation();
             if (!isAdmin) return;
+            if (!confirm("정말 이 게시물을 삭제하시겠습니까?")) return;
 
             await removePostFromCloud(postId);
             showToast("게시물이 삭제되었습니다.");
@@ -737,6 +888,7 @@
 
         async function deleteCurrentPost() {
             if (!isAdmin || !currentPostId) return;
+            if (!confirm("정말 이 게시물을 삭제하시겠습니까?")) return;
 
             const targetId = currentPostId;
             closeDetailModal();
@@ -764,7 +916,7 @@
         async function savePostEdit(e) {
             e.preventDefault();
             if (!isAdmin) return;
-            
+
             const post = posts.find(p => p.id === currentPostId);
             if (!post) return;
 
@@ -775,7 +927,7 @@
             post.title = newTitle;
             post.content = newContent;
 
-            await syncPostToCloud(post);
+            await syncPostToCloud();
 
             document.getElementById('detailTitle').textContent = newTitle;
             document.getElementById('detailContent').textContent = newContent;
@@ -873,7 +1025,7 @@
                 return c;
             });
 
-            await syncPostToCloud(post);
+            await syncPostToCloud();
             editingCommentId = null;
             showToast("댓글이 수정되었습니다.");
         }
@@ -883,7 +1035,7 @@
             if (!post) return;
 
             post.comments = (post.comments || []).filter(c => c.id !== commentId);
-            await syncPostToCloud(post);
+            await syncPostToCloud();
             showToast("댓글이 삭제되었습니다.");
         }
 
@@ -912,7 +1064,7 @@
                 if (!post.comments) post.comments = [];
                 post.comments.push(newComment);
 
-                await syncPostToCloud(post);
+                await syncPostToCloud();
                 textInput.value = '';
                 showToast("댓글이 등록되었습니다.");
             }
@@ -972,8 +1124,10 @@
         }
 
         function openReportModal() {
+            if (isAdmin) return;
             document.getElementById('reportTitle').value = '';
             document.getElementById('reportContent').value = '';
+            if (document.getElementById('reportFileInput')) document.getElementById('reportFileInput').value = '';
             document.getElementById('reportModal').classList.remove('hidden');
         }
 
@@ -986,7 +1140,17 @@
 
             const title = document.getElementById('reportTitle').value.trim();
             const content = document.getElementById('reportContent').value.trim();
+            const fileInput = document.getElementById('reportFileInput');
+            const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+
             if (!title || !content) return;
+
+            const { dataUrl, fileMeta, error } = await processFile(file);
+
+            if (error) {
+                alert(error);
+                return;
+            }
 
             const now = new Date();
             const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
@@ -1003,8 +1167,11 @@
                 createdAt: postId
             };
 
+            if (dataUrl) newReport.dataUrl = dataUrl;
+            if (fileMeta) newReport.file = fileMeta;
+
             posts.unshift(newReport);
-            await syncPostToCloud(newReport);
+            await syncPostToCloud();
 
             closeReportModal();
             showToast("익명 불편신고가 접수되었습니다.");
@@ -1017,7 +1184,7 @@
             }
             document.getElementById('postTitle').value = '';
             document.getElementById('postContent').value = '';
-            if(document.getElementById('postFileInput')) document.getElementById('postFileInput').value = '';
+            if (document.getElementById('postFileInput')) document.getElementById('postFileInput').value = '';
 
             document.getElementById('postModal').classList.remove('hidden');
         }
@@ -1039,12 +1206,11 @@
             const fileInput = document.getElementById('postFileInput');
             const file = fileInput && fileInput.files ? fileInput.files[0] : null;
 
-            let attachedFile = null;
-            if (file) {
-                attachedFile = {
-                    name: file.name,
-                    size: (file.size / (1024 * 1024)).toFixed(1) + " MB"
-                };
+            const { dataUrl, fileMeta, error } = await processFile(file);
+
+            if (error) {
+                alert(error);
+                return;
             }
 
             const now = new Date();
@@ -1062,19 +1228,14 @@
                 createdAt: postId
             };
 
-            if (attachedFile) {
-                newPost.file = attachedFile;
-            }
+            if (dataUrl) newPost.dataUrl = dataUrl;
+            if (fileMeta) newPost.file = fileMeta;
 
             posts.unshift(newPost);
-            await syncPostToCloud(newPost);
+            await syncPostToCloud();
 
             closePostModal();
             showToast("기사가 등록되었습니다.");
-        }
-
-        function downloadDummyFile() {
-            showToast("다운로드가 시작되었습니다.");
         }
 
         function showToast(msg) {
@@ -1099,4 +1260,3 @@
     </script>
 </body>
 </html>
-
