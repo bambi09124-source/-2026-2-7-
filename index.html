@@ -404,8 +404,8 @@
 
     <!-- Google Sheets Cloud Sync Engine -->
     <script>
-        // ⚠️ 구글 앱스 크립트 웹 앱 URL을 아래 따옴표 안에 붙여넣으세요.
-        const GAS_URL = "여기에_구글_앱스_크립트_웹앱_URL을_붙여넣으세요";
+        // 구글 앱스 크립트 웹 앱 URL 적용
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbxu0COQhftWCsRyRpPTs1B5LduDdB9EpM4UrVrhyt4jnFXl25JwJlNt5w-Hl6DMTIPdcw/exec";
 
         const STORAGE_KEY = 'sisatalk_posts_cache_v9';
         const ADMIN_STORAGE_KEY = 'sisatalk_admin_auth_v2';
@@ -1099,5 +1099,1104 @@
     </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>시사톡톡</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Font (Pretendard) -->
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <style>
+        body {
+            font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background-color: #f6f9fb;
+            color: #0f172a;
+            word-break: keep-all;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #99f6e4;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #2dd4bf;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-teal-100 selection:text-teal-800">
 
+    <!-- Top Navigation Header -->
+    <header class="bg-white/90 backdrop-blur-md border-b border-slate-100 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <div class="flex items-center space-x-2.5 cursor-pointer" onclick="filterCategory('ALL')">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-teal-500 via-emerald-500 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-teal-200">
+                    <i data-lucide="newspaper" class="w-4 h-4"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-black text-slate-900 tracking-tight">시사톡톡</h1>
+                </div>
+            </div>
 
+            <!-- Header Right Action Buttons -->
+            <div class="flex items-center space-x-2">
+                <!-- Admin Status Badge -->
+                <span id="adminBadge" class="hidden inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-teal-50 text-teal-700 border border-teal-200 shadow-sm">
+                    <span class="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse"></span>
+                    관리자
+                </span>
+
+                <!-- Admin Auth Button -->
+                <button id="adminAuthBtn" onclick="openAdminModal()" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 active:scale-95 rounded-full transition-all">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-teal-600"></i>
+                    <span id="adminBtnText">관리자 인증</span>
+                </button>
+
+                <!-- Report Button -->
+                <button id="reportBtn" onclick="openReportModal()" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 active:scale-95 rounded-full transition-all shadow-sm">
+                    <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
+                    <span>불편신고</span>
+                </button>
+
+                <!-- Admin Only Post Write Button -->
+                <button id="adminWriteBtn" onclick="openPostModal()" class="hidden inline-flex items-center gap-1 px-3.5 py-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-teal-600 active:scale-95 rounded-full transition-all shadow-md">
+                    <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                    <span>기사작성</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Body -->
+    <main class="flex-1 max-w-4xl w-full mx-auto px-4 py-6 space-y-5">
+
+        <!-- Category Filter & Search Bar -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            
+            <!-- Category Pills -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+                <button id="btnCatAll" onclick="filterCategory('ALL')" class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 bg-slate-900 text-white shadow-sm">
+                    전체보기
+                </button>
+                <button id="btnCatNotice" onclick="filterCategory('NOTICE')" class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 bg-slate-100 text-slate-600 hover:bg-slate-200">
+                    📌 공지사항
+                </button>
+                <button id="btnCatArticle" onclick="filterCategory('ARTICLE')" class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 bg-slate-100 text-slate-600 hover:bg-slate-200">
+                    📰 일반 기사
+                </button>
+                <button id="btnCatReport" onclick="filterCategory('REPORT')" class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 bg-slate-100 text-slate-600 hover:bg-slate-200">
+                    ⚠️ 불편신고함
+                </button>
+            </div>
+
+            <!-- Search Input -->
+            <div class="relative w-full sm:w-64">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                <input type="text" id="searchInput" onkeyup="filterPosts()" placeholder="제목, 내용 검색..." 
+                    class="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-full text-xs focus:outline-none focus:ring-2 focus:ring-teal-500/30 transition-all shadow-sm">
+            </div>
+        </div>
+
+        <!-- Posts List Container -->
+        <div id="postsList" class="flex flex-col gap-3">
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="text-center py-16 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-teal-500 border-t-transparent mb-3"></div>
+                <p class="text-xs font-bold text-slate-400">게시글을 불러오는 중입니다...</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal: Detail & Comments -->
+    <div id="detailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-xl w-full my-auto shadow-2xl border border-slate-100 flex flex-col max-h-[88vh] overflow-hidden">
+            
+            <!-- Modal Header -->
+            <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div class="flex items-center gap-2">
+                    <span id="detailCategoryBadge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full"></span>
+                    <span class="text-xs font-semibold text-slate-400">상세보기</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <button onclick="enablePostEditMode()" id="btnStartPostEdit" class="hidden inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors">
+                        <i data-lucide="edit-2" class="w-3 h-3"></i> 수정
+                    </button>
+                    <button id="btnAdminDeleteDetail" onclick="deleteCurrentPost()" class="hidden inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors">
+                        <i data-lucide="trash-2" class="w-3 h-3"></i> 삭제
+                    </button>
+                    <button onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Scrollable Body -->
+            <div class="p-5 overflow-y-auto space-y-5 flex-1">
+                
+                <!-- View Mode -->
+                <div id="postViewContainer" class="space-y-3.5">
+                    <h2 id="detailTitle" class="text-lg sm:text-xl font-black text-slate-900 leading-snug"></h2>
+                    
+                    <div class="flex items-center justify-between text-xs text-slate-400 pb-3 border-b border-slate-100">
+                        <div class="flex items-center gap-2">
+                            <div class="w-5 h-5 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-[10px]">
+                                <i data-lucide="user" class="w-3 h-3"></i>
+                            </div>
+                            <span id="detailAuthor" class="font-bold text-slate-800"></span>
+                            <span>•</span>
+                            <span id="detailDate"></span>
+                        </div>
+                    </div>
+
+                    <div id="detailContent" class="text-slate-700 text-xs sm:text-sm leading-relaxed whitespace-pre-line min-h-[60px]"></div>
+
+                    <!-- File Section -->
+                    <div id="detailFileContainer" class="hidden pt-1">
+                        <div class="p-3 rounded-xl bg-teal-50/50 border border-teal-100 flex items-center justify-between">
+                            <div class="flex items-center gap-2.5 overflow-hidden">
+                                <div class="p-2 rounded-lg bg-teal-100 text-teal-700 shrink-0">
+                                    <i data-lucide="file-text" class="w-4 h-4"></i>
+                                </div>
+                                <div class="truncate">
+                                    <p id="detailFileName" class="text-xs font-bold text-slate-800 truncate"></p>
+                                    <p id="detailFileSize" class="text-[10px] text-slate-400"></p>
+                                </div>
+                            </div>
+                            <button onclick="downloadDummyFile()" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-teal-700 bg-white border border-teal-200 hover:bg-teal-50 rounded-full transition-colors shadow-sm shrink-0">
+                                <i data-lucide="download" class="w-3 h-3"></i> 다운로드
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Post Edit Mode (Admin Only) -->
+                <form id="postEditContainer" onsubmit="savePostEdit(event)" class="hidden space-y-3.5 p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                    <h3 class="text-xs font-bold text-slate-900 uppercase">게시물 수정</h3>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1">제목</label>
+                        <input type="text" id="editPostTitle" required class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-500/20">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1">내용</label>
+                        <textarea id="editPostContent" rows="3" required class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500/20 resize-none"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-1.5 pt-1">
+                        <button type="button" onclick="cancelPostEdit()" class="px-3 py-1 text-xs font-bold text-slate-600 hover:bg-slate-200 rounded-full">취소</button>
+                        <button type="submit" id="btnSavePostEdit" class="px-3.5 py-1 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-full shadow-sm">수정 저장</button>
+                    </div>
+                </form>
+
+                <hr class="border-slate-100">
+
+                <!-- Comments System -->
+                <div class="space-y-3.5">
+                    <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <i data-lucide="message-circle" class="w-3.5 h-3.5 text-teal-600"></i>
+                        <span>댓글</span>
+                        <span id="detailCommentCount" class="text-[10px] text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full font-bold">0</span>
+                    </h3>
+
+                    <!-- Comments List -->
+                    <div id="commentsList" class="flex flex-col gap-2.5"></div>
+
+                    <!-- Add Comment Form -->
+                    <form onsubmit="handleAddComment(event)" class="mt-3 pt-2 space-y-2">
+                        <div class="w-full sm:w-1/2">
+                            <input type="text" id="commentAuthor" required placeholder="작성자 이름" 
+                                class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-teal-500/20">
+                        </div>
+
+                        <!-- Emoji Bar -->
+                        <div class="flex items-center gap-1 overflow-x-auto py-1 scrollbar-none">
+                            <span class="text-[10px] font-bold text-slate-400 shrink-0">이모지:</span>
+                            <button type="button" onclick="insertEmoji('👍')" class="hover:scale-125 transition-transform text-sm p-1">👍</button>
+                            <button type="button" onclick="insertEmoji('❤️')" class="hover:scale-125 transition-transform text-sm p-1">❤️</button>
+                            <button type="button" onclick="insertEmoji('💡')" class="hover:scale-125 transition-transform text-sm p-1">💡</button>
+                            <button type="button" onclick="insertEmoji('🔥')" class="hover:scale-125 transition-transform text-sm p-1">🔥</button>
+                            <button type="button" onclick="insertEmoji('👏')" class="hover:scale-125 transition-transform text-sm p-1">👏</button>
+                            <button type="button" onclick="insertEmoji('😮')" class="hover:scale-125 transition-transform text-sm p-1">😮</button>
+                            <button type="button" onclick="insertEmoji('🙏')" class="hover:scale-125 transition-transform text-sm p-1">🙏</button>
+                            <button type="button" onclick="insertEmoji('😊')" class="hover:scale-125 transition-transform text-sm p-1">😊</button>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <textarea id="commentText" required rows="2" placeholder="댓글을 작성해 주세요..." 
+                                class="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-teal-500/20 resize-none"></textarea>
+                            <button type="submit" id="btnSubmitComment" class="px-4 py-1.5 bg-slate-900 hover:bg-teal-600 text-white font-bold text-xs rounded-xl transition-all shadow-sm shrink-0 flex items-center justify-center">
+                                등록
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Admin Auth -->
+    <div id="adminModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100">
+            <div class="flex justify-between items-center mb-3">
+                <div class="flex items-center gap-1.5 text-teal-600">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    <h3 class="text-sm font-bold text-slate-900">관리자 인증</h3>
+                </div>
+                <button onclick="closeAdminModal()" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            
+            <p class="text-xs text-slate-500 mb-3.5 leading-relaxed">
+                관리자 비밀번호를 입력하세요. 인증 완료 시 기사 작성 및 관리 권한이 부여됩니다.
+            </p>
+
+            <form onsubmit="handleAdminAuth(event)" class="space-y-3">
+                <div>
+                    <input type="password" id="adminCodeInput" placeholder="비밀번호 입력" required
+                        class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 text-xs">
+                </div>
+                
+                <div id="adminAuthError" class="text-[11px] text-rose-500 font-bold hidden flex items-center gap-1">
+                    <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i>
+                    비밀번호가 올바르지 않습니다.
+                </div>
+
+                <div class="flex justify-end gap-1.5 pt-1">
+                    <button type="button" onclick="closeAdminModal()" class="px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                        취소
+                    </button>
+                    <button type="submit" class="px-4 py-1.5 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-full shadow-sm">
+                        인증 완료
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Anonymous Report -->
+    <div id="reportModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-1.5 text-amber-600">
+                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                    <h3 class="text-base font-bold text-slate-900">익명 불편신고함</h3>
+                </div>
+                <button onclick="closeReportModal()" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-slate-500 mb-4 leading-relaxed">
+                시사톡톡을 이용하면서 불편했던 점이나 개선 사항을 익명으로 자유롭게 남겨주세요.
+            </p>
+
+            <form onsubmit="handleCreateReport(event)" class="space-y-3.5">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">제목</label>
+                    <input type="text" id="reportTitle" required placeholder="신고/건의 제목을 입력하세요"
+                        class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 text-xs">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">내용</label>
+                    <textarea id="reportContent" rows="4" required placeholder="구체적인 내용을 적어주세요..."
+                        class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 text-xs resize-none"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-1.5 pt-1">
+                    <button type="button" onclick="closeReportModal()" class="px-3.5 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                        취소
+                    </button>
+                    <button type="submit" id="btnSubmitReport" class="px-4 py-1.5 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-full transition-colors shadow-md">
+                        익명 신고 접수
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Admin Only Post Write -->
+    <div id="postModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-base font-bold text-slate-900">기사 및 공지 작성 (관리자 전용)</h3>
+                <button onclick="closePostModal()" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form onsubmit="handleCreatePost(event)" class="space-y-3.5">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">게시물 분류</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="postCategory" value="ARTICLE" checked class="peer sr-only">
+                            <div class="p-2.5 text-center rounded-xl border border-slate-200 peer-checked:border-teal-500 peer-checked:bg-teal-50/50 peer-checked:text-teal-700 text-xs font-bold transition-all">
+                                📰 일반 기사
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="postCategory" value="NOTICE" class="peer sr-only">
+                            <div class="p-2.5 text-center rounded-xl border border-slate-200 peer-checked:border-teal-500 peer-checked:bg-teal-50/50 peer-checked:text-teal-700 text-xs font-bold transition-all">
+                                📌 공지사항
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">작성자</label>
+                    <input type="text" id="postAuthor" value="운영팀" required
+                        class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 text-xs bg-slate-50">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">제목</label>
+                    <input type="text" id="postTitle" required placeholder="기사 제목을 입력하세요"
+                        class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 text-xs">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">내용</label>
+                    <textarea id="postContent" rows="4" required placeholder="시사 뉴스 내용을 입력하세요..."
+                        class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 text-xs resize-none"></textarea>
+                </div>
+
+                <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <label class="text-[11px] font-bold text-slate-800 flex items-center gap-1">
+                            <i data-lucide="paperclip" class="w-3.5 h-3.5 text-teal-600"></i>
+                            자료 파일 첨부
+                        </label>
+                    </div>
+                    <input type="file" id="postFileInput"
+                        class="block w-full text-[11px] text-slate-500 file:mr-2.5 file:py-1.5 file:px-2.5 file:rounded-full file:border-0 file:text-[11px] file:font-bold file:bg-teal-100 file:text-teal-800 cursor-pointer">
+                </div>
+
+                <div class="flex justify-end gap-1.5 pt-1">
+                    <button type="button" onclick="closePostModal()" class="px-3.5 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                        취소
+                    </button>
+                    <button type="submit" id="btnSubmitPost" class="px-4 py-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-teal-600 rounded-full transition-colors shadow-md">
+                        기사 등록
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-slate-900/95 backdrop-blur text-white px-4 py-2.5 rounded-full shadow-2xl transform transition-all translate-y-20 opacity-0 z-50 flex items-center gap-2 text-xs font-bold border border-slate-800">
+        <i data-lucide="check-circle" class="w-4 h-4 text-teal-400 shrink-0"></i>
+        <span id="toastMessage">알림 내용</span>
+    </div>
+
+    <!-- Google Sheets Cloud Sync Engine -->
+    <script>
+        // 구글 앱스 크립트 웹 앱 URL 적용
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbxu0COQhftWCsRyRpPTs1B5LduDdB9EpM4UrVrhyt4jnFXl25JwJlNt5w-Hl6DMTIPdcw/exec";
+
+        const STORAGE_KEY = 'sisatalk_posts_cache_v9';
+        const ADMIN_STORAGE_KEY = 'sisatalk_admin_auth_v2';
+        const ADMIN_CODE = "1004";
+
+        let posts = [];
+        let isAdmin = localStorage.getItem(ADMIN_STORAGE_KEY) === 'true';
+        let currentPostId = null;
+        let selectedCategory = "ALL";
+        let editingCommentId = null;
+
+        // Window 매핑
+        window.filterCategory = filterCategory;
+        window.filterPosts = filterPosts;
+        window.openDetailModal = openDetailModal;
+        window.closeDetailModal = closeDetailModal;
+        window.deletePost = deletePost;
+        window.deleteCurrentPost = deleteCurrentPost;
+        window.enablePostEditMode = enablePostEditMode;
+        window.cancelPostEdit = cancelPostEdit;
+        window.savePostEdit = savePostEdit;
+        window.insertEmoji = insertEmoji;
+        window.startCommentEdit = startCommentEdit;
+        window.cancelCommentEdit = cancelCommentEdit;
+        window.saveCommentEdit = saveCommentEdit;
+        window.deleteComment = deleteComment;
+        window.handleAddComment = handleAddComment;
+        window.openAdminModal = openAdminModal;
+        window.closeAdminModal = closeAdminModal;
+        window.handleAdminAuth = handleAdminAuth;
+        window.openReportModal = openReportModal;
+        window.closeReportModal = closeReportModal;
+        window.handleCreateReport = handleCreateReport;
+        window.openPostModal = openPostModal;
+        window.closePostModal = closePostModal;
+        window.handleCreatePost = handleCreatePost;
+        window.downloadDummyFile = downloadDummyFile;
+
+        // 구글 시트 데이터 불러오기
+        async function fetchPostsFromCloud() {
+            if (!GAS_URL || GAS_URL.includes("여기에")) return;
+            try {
+                const res = await fetch(GAS_URL);
+                const data = await res.json();
+                if (Array.isArray(data) && data.length > 0) {
+                    posts = data;
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+                    renderPosts();
+                    if (currentPostId) {
+                        const target = posts.find(p => p.id === currentPostId);
+                        if (target) renderComments();
+                    }
+                } else if (posts.length === 0) {
+                    seedInitialData(true);
+                }
+            } catch (err) {
+                console.error("구글 시트 연동 실패:", err);
+            }
+        }
+
+        // 구글 시트에 데이터 저장하기
+        async function syncPostToCloud(post) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+            renderPosts();
+            if (currentPostId) renderComments();
+
+            if (!GAS_URL || GAS_URL.includes("여기에")) return;
+
+            try {
+                await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(posts)
+                });
+            } catch (e) {
+                console.error("구글 시트 저장 실패:", e);
+            }
+        }
+
+        async function removePostFromCloud(postId) {
+            posts = posts.filter(p => p.id !== postId);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+            renderPosts();
+
+            if (!GAS_URL || GAS_URL.includes("여기에")) return;
+
+            try {
+                await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(posts)
+                });
+            } catch (e) {
+                console.error("구글 시트 삭제 실패:", e);
+            }
+        }
+
+        async function seedInitialData(syncToCloud = false) {
+            const nowId = Date.now();
+            const initPost = {
+                id: nowId,
+                category: "NOTICE",
+                title: "📌 시사톡톡 서비스 안내 및 이용 수칙",
+                author: "운영팀",
+                content: "시사톡톡에 오신 것을 환영합니다!\n이곳에서 최신 시사 소식을 확인하고 의견을 나눠보세요.",
+                date: new Date().toISOString().split('T')[0],
+                comments: [
+                    { id: 101, author: "시사톡톡", text: "게시글 및 댓글이 실시간 공유됩니다! 👍", date: "2026-08-22 12:00" }
+                ],
+                createdAt: nowId
+            };
+            posts = [initPost];
+            if (syncToCloud) {
+                await syncPostToCloud(initPost);
+            } else {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+                renderPosts();
+            }
+        }
+
+        async function initSystem() {
+            updateAdminUI();
+
+            const cached = localStorage.getItem(STORAGE_KEY);
+            if (cached) {
+                try {
+                    posts = JSON.parse(cached);
+                    renderPosts();
+                } catch (e) {}
+            }
+
+            await fetchPostsFromCloud();
+            // 5초마다 구글 시트에서 신규 데이터 주기적 동기화
+            setInterval(fetchPostsFromCloud, 5000);
+        }
+
+        window.addEventListener('load', () => {
+            lucide.createIcons();
+            initSystem();
+        });
+
+        function filterCategory(cat) {
+            selectedCategory = cat;
+            const btnAll = document.getElementById('btnCatAll');
+            const btnNotice = document.getElementById('btnCatNotice');
+            const btnArticle = document.getElementById('btnCatArticle');
+            const btnReport = document.getElementById('btnCatReport');
+
+            [btnAll, btnNotice, btnArticle, btnReport].forEach(btn => {
+                if(btn) btn.className = "px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 bg-slate-100 text-slate-600 hover:bg-slate-200";
+            });
+
+            if (cat === 'ALL' && btnAll) btnAll.className = "px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 bg-slate-900 text-white shadow-sm";
+            if (cat === 'NOTICE' && btnNotice) btnNotice.className = "px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 bg-teal-600 text-white shadow-sm";
+            if (cat === 'ARTICLE' && btnArticle) btnArticle.className = "px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 bg-slate-900 text-white shadow-sm";
+            if (cat === 'REPORT' && btnReport) btnReport.className = "px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 bg-amber-600 text-white shadow-sm";
+
+            renderPosts();
+        }
+
+        function renderPosts() {
+            const container = document.getElementById('postsList');
+            const searchInputElem = document.getElementById('searchInput');
+            const query = searchInputElem ? searchInputElem.value.toLowerCase() : '';
+
+            let filtered = posts.filter(p => {
+                let matchCat = false;
+                if (selectedCategory === 'ALL') {
+                    matchCat = p.category !== 'REPORT';
+                } else {
+                    matchCat = p.category === selectedCategory;
+                }
+
+                const matchQuery = (p.title || '').toLowerCase().includes(query) || 
+                                   (p.content || '').toLowerCase().includes(query) || 
+                                   (p.author || '').toLowerCase().includes(query);
+                return matchCat && matchQuery;
+            });
+
+            filtered.sort((a, b) => {
+                if (a.category === 'NOTICE' && b.category !== 'NOTICE') return -1;
+                if (a.category !== 'NOTICE' && b.category === 'NOTICE') return 1;
+                return (b.createdAt || b.id) - (a.createdAt || a.id);
+            });
+
+            container.innerHTML = '';
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-16 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                        <i data-lucide="inbox" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i>
+                        <p class="text-xs font-bold text-slate-400">등록된 게시물이 없습니다.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            filtered.forEach(post => {
+                const isNotice = post.category === 'NOTICE';
+                const isReport = post.category === 'REPORT';
+                
+                const card = document.createElement('div');
+                let badgeHtml = '';
+                let borderClass = 'bg-white border-slate-100 hover:border-teal-300 hover:shadow-md';
+
+                if (isNotice) {
+                    badgeHtml = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-teal-600 text-white shrink-0">📌 공지</span>`;
+                    borderClass = 'bg-teal-50/40 border-teal-200/80 hover:border-teal-400 shadow-sm';
+                } else if (isReport) {
+                    badgeHtml = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-600 text-white shrink-0">⚠️ 불편신고</span>`;
+                    borderClass = 'bg-amber-50/40 border-amber-200/80 hover:border-amber-400 shadow-sm';
+                } else {
+                    badgeHtml = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 shrink-0">📰 기사</span>`;
+                }
+
+                card.className = `p-4 rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between ${borderClass}`;
+
+                card.innerHTML = `
+                    <div onclick="openDetailModal(${post.id})" class="space-y-2">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-1.5 overflow-hidden">
+                                ${badgeHtml}
+                                <h4 class="font-bold text-slate-900 group-hover:text-teal-600 transition-colors text-sm sm:text-base truncate">
+                                    ${escapeHtml(post.title)}
+                                </h4>
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0">
+                                ${post.file ? `
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-white text-teal-700 border border-teal-200 rounded-full text-[10px] font-bold">
+                                        <i data-lucide="paperclip" class="w-2.5 h-2.5"></i> 첨부
+                                    </span>
+                                ` : ''}
+                                ${isAdmin ? `
+                                    <button onclick="deletePost(event, ${post.id})" class="p-1 text-slate-400 hover:text-rose-600 rounded-full">
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                            ${escapeHtml(post.content)}
+                        </p>
+                    </div>
+
+                    <div onclick="openDetailModal(${post.id})" class="flex items-center justify-between pt-2.5 mt-2.5 border-t border-slate-100 text-[11px] text-slate-400">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-slate-700 font-bold">${escapeHtml(post.author)}</span>
+                            <span>•</span>
+                            <span>${post.date}</span>
+                        </div>
+                        <div class="flex items-center gap-1 text-slate-600 font-bold bg-slate-100 px-2 py-0.5 rounded-full">
+                            <i data-lucide="message-circle" class="w-3 h-3 text-teal-600"></i>
+                            <span>${post.comments ? post.comments.length : 0}</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            lucide.createIcons();
+        }
+
+        function filterPosts() {
+            renderPosts();
+        }
+
+        function openDetailModal(postId) {
+            const post = posts.find(p => p.id === postId);
+            if (!post) return;
+
+            currentPostId = postId;
+            cancelPostEdit();
+
+            const badge = document.getElementById('detailCategoryBadge');
+            if (post.category === 'NOTICE') {
+                badge.className = "text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-teal-600 text-white";
+                badge.textContent = "📌 공지사항";
+            } else if (post.category === 'REPORT') {
+                badge.className = "text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-600 text-white";
+                badge.textContent = "⚠️ 불편신고";
+            } else {
+                badge.className = "text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700";
+                badge.textContent = "📰 일반 기사";
+            }
+
+            document.getElementById('detailTitle').textContent = post.title;
+            document.getElementById('detailAuthor').textContent = post.author;
+            document.getElementById('detailDate').textContent = post.date;
+            document.getElementById('detailContent').textContent = post.content;
+
+            const btnAdminDelete = document.getElementById('btnAdminDeleteDetail');
+            const btnStartEdit = document.getElementById('btnStartPostEdit');
+
+            if (isAdmin) {
+                btnAdminDelete.classList.remove('hidden');
+                btnStartEdit.classList.remove('hidden');
+            } else {
+                btnAdminDelete.classList.add('hidden');
+                btnStartEdit.classList.add('hidden');
+            }
+
+            const fileContainer = document.getElementById('detailFileContainer');
+            if (post.file) {
+                document.getElementById('detailFileName').textContent = post.file.name;
+                document.getElementById('detailFileSize').textContent = post.file.size;
+                fileContainer.classList.remove('hidden');
+            } else {
+                fileContainer.classList.add('hidden');
+            }
+
+            renderComments();
+            document.getElementById('detailModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+            currentPostId = null;
+        }
+
+        async function deletePost(e, postId) {
+            if (e) e.stopPropagation();
+            if (!isAdmin) return;
+
+            await removePostFromCloud(postId);
+            showToast("게시물이 삭제되었습니다.");
+        }
+
+        async function deleteCurrentPost() {
+            if (!isAdmin || !currentPostId) return;
+
+            const targetId = currentPostId;
+            closeDetailModal();
+            await removePostFromCloud(targetId);
+            showToast("게시물이 삭제되었습니다.");
+        }
+
+        function enablePostEditMode() {
+            if (!isAdmin) return;
+            const post = posts.find(p => p.id === currentPostId);
+            if (!post) return;
+
+            document.getElementById('editPostTitle').value = post.title;
+            document.getElementById('editPostContent').value = post.content;
+
+            document.getElementById('postViewContainer').classList.add('hidden');
+            document.getElementById('postEditContainer').classList.remove('hidden');
+        }
+
+        function cancelPostEdit() {
+            document.getElementById('postViewContainer').classList.remove('hidden');
+            document.getElementById('postEditContainer').classList.add('hidden');
+        }
+
+        async function savePostEdit(e) {
+            e.preventDefault();
+            if (!isAdmin) return;
+            
+            const post = posts.find(p => p.id === currentPostId);
+            if (!post) return;
+
+            const newTitle = document.getElementById('editPostTitle').value.trim();
+            const newContent = document.getElementById('editPostContent').value.trim();
+            if (!newTitle || !newContent) return;
+
+            post.title = newTitle;
+            post.content = newContent;
+
+            await syncPostToCloud(post);
+
+            document.getElementById('detailTitle').textContent = newTitle;
+            document.getElementById('detailContent').textContent = newContent;
+
+            cancelPostEdit();
+            showToast("게시물이 수정되었습니다.");
+        }
+
+        function insertEmoji(emoji) {
+            const commentText = document.getElementById('commentText');
+            commentText.value += emoji;
+            commentText.focus();
+        }
+
+        function renderComments() {
+            const post = posts.find(p => p.id === currentPostId);
+            if (!post) return;
+
+            const commentsList = document.getElementById('commentsList');
+            const commentCount = document.getElementById('detailCommentCount');
+            const comments = post.comments || [];
+
+            commentCount.textContent = comments.length;
+            commentsList.innerHTML = '';
+
+            if (comments.length === 0) {
+                commentsList.innerHTML = `
+                    <div class="text-center py-5 bg-slate-50 rounded-xl text-xs text-slate-400 font-medium">
+                        첫 번째 댓글을 남겨보세요!
+                    </div>
+                `;
+                return;
+            }
+
+            comments.forEach(c => {
+                const commentBox = document.createElement('div');
+                commentBox.className = "p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1";
+
+                if (editingCommentId === c.id) {
+                    commentBox.innerHTML = `
+                        <div class="space-y-2">
+                            <textarea id="editCommentText_${c.id}" class="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs focus:outline-none resize-none">${escapeHtml(c.text)}</textarea>
+                            <div class="flex justify-end gap-1">
+                                <button onclick="cancelCommentEdit()" class="px-2.5 py-1 text-[10px] font-bold text-slate-500 hover:bg-slate-200 rounded-full">취소</button>
+                                <button onclick="saveCommentEdit(${c.id})" class="px-2.5 py-1 text-[10px] font-bold text-white bg-teal-600 rounded-full">저장</button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    commentBox.innerHTML = `
+                        <div class="flex items-center justify-between text-xs">
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-bold text-slate-900">${escapeHtml(c.author)}</span>
+                                <span class="text-[10px] text-slate-400">• ${c.date}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="startCommentEdit(${c.id})" class="text-[10px] font-bold text-slate-400 hover:text-teal-600">수정</button>
+                                ${isAdmin ? `
+                                    <button onclick="deleteComment(${c.id})" class="text-[10px] font-bold text-rose-500 hover:text-rose-700">삭제</button>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-700 leading-relaxed">${escapeHtml(c.text)}</p>
+                    `;
+                }
+                commentsList.appendChild(commentBox);
+            });
+            lucide.createIcons();
+        }
+
+        function startCommentEdit(commentId) {
+            editingCommentId = commentId;
+            renderComments();
+        }
+
+        function cancelCommentEdit() {
+            editingCommentId = null;
+            renderComments();
+        }
+
+        async function saveCommentEdit(commentId) {
+            const post = posts.find(p => p.id === currentPostId);
+            if (!post) return;
+
+            const inputElem = document.getElementById(`editCommentText_${commentId}`);
+            if (!inputElem) return;
+
+            const newText = inputElem.value.trim();
+            if (!newText) return;
+
+            post.comments = (post.comments || []).map(c => {
+                if (c.id === commentId) {
+                    return { ...c, text: newText };
+                }
+                return c;
+            });
+
+            await syncPostToCloud(post);
+            editingCommentId = null;
+            showToast("댓글이 수정되었습니다.");
+        }
+
+        async function deleteComment(commentId) {
+            const post = posts.find(p => p.id === currentPostId);
+            if (!post) return;
+
+            post.comments = (post.comments || []).filter(c => c.id !== commentId);
+            await syncPostToCloud(post);
+            showToast("댓글이 삭제되었습니다.");
+        }
+
+        async function handleAddComment(e) {
+            e.preventDefault();
+
+            const authorInput = document.getElementById('commentAuthor');
+            const textInput = document.getElementById('commentText');
+            const author = authorInput.value.trim();
+            const text = textInput.value.trim();
+
+            if (!author || !text) return;
+
+            const post = posts.find(p => p.id === currentPostId);
+            if (post) {
+                const now = new Date();
+                const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+                const newComment = {
+                    id: Date.now(),
+                    author: author,
+                    text: text,
+                    date: timeStr
+                };
+
+                if (!post.comments) post.comments = [];
+                post.comments.push(newComment);
+
+                await syncPostToCloud(post);
+                textInput.value = '';
+                showToast("댓글이 등록되었습니다.");
+            }
+        }
+
+        function openAdminModal() {
+            if (isAdmin) {
+                isAdmin = false;
+                localStorage.setItem(ADMIN_STORAGE_KEY, 'false');
+                updateAdminUI();
+                showToast("관리자 권한 해제됨");
+                return;
+            }
+            document.getElementById('adminCodeInput').value = '';
+            document.getElementById('adminAuthError').classList.add('hidden');
+            document.getElementById('adminModal').classList.remove('hidden');
+        }
+
+        function closeAdminModal() {
+            document.getElementById('adminModal').classList.add('hidden');
+        }
+
+        function handleAdminAuth(e) {
+            e.preventDefault();
+            const code = document.getElementById('adminCodeInput').value.trim();
+
+            if (code === ADMIN_CODE) {
+                isAdmin = true;
+                localStorage.setItem(ADMIN_STORAGE_KEY, 'true');
+                updateAdminUI();
+                closeAdminModal();
+                showToast("관리자 인증 완료!");
+            } else {
+                document.getElementById('adminAuthError').classList.remove('hidden');
+            }
+        }
+
+        function updateAdminUI() {
+            const badge = document.getElementById('adminBadge');
+            const btnText = document.getElementById('adminBtnText');
+            const adminWriteBtn = document.getElementById('adminWriteBtn');
+            const reportBtn = document.getElementById('reportBtn');
+
+            if (isAdmin) {
+                if(badge) badge.classList.remove('hidden');
+                if(btnText) btnText.textContent = "로그아웃";
+                if(adminWriteBtn) adminWriteBtn.classList.remove('hidden');
+                if(reportBtn) reportBtn.classList.add('hidden');
+            } else {
+                if(badge) badge.classList.add('hidden');
+                if(btnText) btnText.textContent = "관리자 인증";
+                if(adminWriteBtn) adminWriteBtn.classList.add('hidden');
+                if(reportBtn) reportBtn.classList.remove('hidden');
+            }
+            renderPosts();
+            lucide.createIcons();
+        }
+
+        function openReportModal() {
+            document.getElementById('reportTitle').value = '';
+            document.getElementById('reportContent').value = '';
+            document.getElementById('reportModal').classList.remove('hidden');
+        }
+
+        function closeReportModal() {
+            document.getElementById('reportModal').classList.add('hidden');
+        }
+
+        async function handleCreateReport(e) {
+            e.preventDefault();
+
+            const title = document.getElementById('reportTitle').value.trim();
+            const content = document.getElementById('reportContent').value.trim();
+            if (!title || !content) return;
+
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            const postId = Date.now();
+
+            const newReport = {
+                id: postId,
+                category: "REPORT",
+                title: `[불편신고] ${title}`,
+                author: "익명제보자",
+                content: content,
+                date: todayStr,
+                comments: [],
+                createdAt: postId
+            };
+
+            posts.unshift(newReport);
+            await syncPostToCloud(newReport);
+
+            closeReportModal();
+            showToast("익명 불편신고가 접수되었습니다.");
+        }
+
+        function openPostModal() {
+            if (!isAdmin) {
+                showToast("관리자 인증이 필요합니다.");
+                return;
+            }
+            document.getElementById('postTitle').value = '';
+            document.getElementById('postContent').value = '';
+            if(document.getElementById('postFileInput')) document.getElementById('postFileInput').value = '';
+
+            document.getElementById('postModal').classList.remove('hidden');
+        }
+
+        function closePostModal() {
+            document.getElementById('postModal').classList.add('hidden');
+        }
+
+        async function handleCreatePost(e) {
+            e.preventDefault();
+            if (!isAdmin) return;
+
+            const categoryRadio = document.querySelector('input[name="postCategory"]:checked');
+            if (!categoryRadio) return;
+            const category = categoryRadio.value;
+
+            const title = document.getElementById('postTitle').value.trim();
+            const content = document.getElementById('postContent').value.trim();
+            const fileInput = document.getElementById('postFileInput');
+            const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+
+            let attachedFile = null;
+            if (file) {
+                attachedFile = {
+                    name: file.name,
+                    size: (file.size / (1024 * 1024)).toFixed(1) + " MB"
+                };
+            }
+
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            const postId = Date.now();
+
+            const newPost = {
+                id: postId,
+                category: category,
+                title: title,
+                author: "운영팀(관리자)",
+                content: content,
+                date: todayStr,
+                comments: [],
+                createdAt: postId
+            };
+
+            if (attachedFile) {
+                newPost.file = attachedFile;
+            }
+
+            posts.unshift(newPost);
+            await syncPostToCloud(newPost);
+
+            closePostModal();
+            showToast("기사가 등록되었습니다.");
+        }
+
+        function downloadDummyFile() {
+            showToast("다운로드가 시작되었습니다.");
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = msg;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
